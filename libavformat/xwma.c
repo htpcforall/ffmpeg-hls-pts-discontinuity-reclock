@@ -34,7 +34,7 @@ typedef struct XWMAContext {
     int64_t data_end;
 } XWMAContext;
 
-static int xwma_probe(AVProbeData *p)
+static int xwma_probe(const AVProbeData *p)
 {
     if (!memcmp(p->buf, "RIFF", 4) && !memcmp(p->buf + 8, "XWMA", 4))
         return AVPROBE_SCORE_MAX;
@@ -211,6 +211,10 @@ static int xwma_read_header(AVFormatContext *s)
             }
 
             for (i = 0; i < dpds_table_size; ++i) {
+                if (avio_feof(pb)) {
+                    ret = AVERROR_INVALIDDATA;
+                    goto fail;
+                }
                 dpds_table[i] = avio_rl32(pb);
                 size -= 4;
             }

@@ -39,7 +39,7 @@ typedef struct BFIContext {
     int avflag;
 } BFIContext;
 
-static int bfi_probe(AVProbeData * p)
+static int bfi_probe(const AVProbeData * p)
 {
     /* Check file header */
     if (AV_RL32(p->buf) == MKTAG('B', 'F', '&', 'I'))
@@ -69,7 +69,12 @@ static int bfi_read_header(AVFormatContext * s)
     /* Set the total number of frames. */
     avio_skip(pb, 8);
     chunk_header           = avio_rl32(pb);
+    if (chunk_header < 3)
+        return AVERROR_INVALIDDATA;
+
     bfi->nframes           = avio_rl32(pb);
+    if (bfi->nframes < 0)
+        return AVERROR_INVALIDDATA;
     avio_rl32(pb);
     avio_rl32(pb);
     avio_rl32(pb);

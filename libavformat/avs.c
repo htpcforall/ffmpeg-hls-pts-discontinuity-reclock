@@ -50,7 +50,7 @@ typedef enum avs_block_type {
     AVS_GAME_DATA = 0x04,
 } AvsBlockType;
 
-static int avs_probe(AVProbeData * p)
+static int avs_probe(const AVProbeData * p)
 {
     const uint8_t *d;
 
@@ -129,7 +129,8 @@ avs_read_video_packet(AVFormatContext * s, AVPacket * pkt,
 static int avs_read_audio_packet(AVFormatContext * s, AVPacket * pkt)
 {
     AvsFormat *avs = s->priv_data;
-    int ret, size;
+    int ret;
+    int64_t size;
 
     size = avio_tell(s->pb);
     ret = ff_voc_get_packet(s, pkt, avs->st_audio, avs->remaining_audio_size);

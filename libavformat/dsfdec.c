@@ -30,7 +30,7 @@ typedef struct {
     uint64_t data_size;
 } DSFContext;
 
-static int dsf_probe(AVProbeData *p)
+static int dsf_probe(const AVProbeData *p)
 {
     if (p->buf_size < 12 || memcmp(p->buf, "DSD ", 4) || AV_RL64(p->buf + 4) != 28)
         return 0;
@@ -124,8 +124,8 @@ static int dsf_read_header(AVFormatContext *s)
 
     dsf->audio_size = avio_rl64(pb) / 8 * st->codecpar->channels;
     st->codecpar->block_align = avio_rl32(pb);
-    if (st->codecpar->block_align > INT_MAX / st->codecpar->channels) {
-        avpriv_request_sample(s, "block_align overflow");
+    if (st->codecpar->block_align > INT_MAX / st->codecpar->channels || st->codecpar->block_align <= 0) {
+        avpriv_request_sample(s, "block_align invalid");
         return AVERROR_INVALIDDATA;
     }
     st->codecpar->block_align *= st->codecpar->channels;

@@ -555,6 +555,9 @@ static int clv_decode_frame(AVCodecContext *avctx, void *data,
     } else {
         int plane;
 
+        if (c->pmb_width * c->pmb_height > 8LL*(buf_size - bytestream2_tell(&gb)))
+            return AVERROR_INVALIDDATA;
+
         if ((ret = ff_reget_buffer(avctx, c->pic)) < 0)
             return ret;
 
@@ -662,8 +665,8 @@ static av_cold int clv_decode_init(AVCodecContext *avctx)
     }
 
     c->tile_shift = av_log2(c->tile_size);
-    if (1 << c->tile_shift != c->tile_size) {
-        av_log(avctx, AV_LOG_ERROR, "Tile size: %d, is not power of 2.\n", c->tile_size);
+    if (1U << c->tile_shift != c->tile_size || c->tile_shift < 1 || c->tile_shift > 30) {
+        av_log(avctx, AV_LOG_ERROR, "Tile size: %d, is not power of 2 > 1 and < 2^31\n", c->tile_size);
         return AVERROR_INVALIDDATA;
     }
 

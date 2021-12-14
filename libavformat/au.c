@@ -57,7 +57,7 @@ static const AVCodecTag codec_au_tags[] = {
 
 #if CONFIG_AU_DEMUXER
 
-static int au_probe(AVProbeData *p)
+static int au_probe(const AVProbeData *p)
 {
     if (p->buf[0] == '.' && p->buf[1] == 's' &&
         p->buf[2] == 'n' && p->buf[3] == 'd')
@@ -86,6 +86,11 @@ static int au_read_annotation(AVFormatContext *s, int size)
     av_bprint_init(&bprint, 64, AV_BPRINT_SIZE_UNLIMITED);
 
     while (size-- > 0) {
+        if (avio_feof(pb)) {
+            av_bprint_finalize(&bprint, NULL);
+            av_freep(&key);
+            return AVERROR_EOF;
+        }
         c = avio_r8(pb);
         switch(state) {
         case PARSE_KEY:

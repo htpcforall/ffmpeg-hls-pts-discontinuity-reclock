@@ -568,6 +568,7 @@ static void ffmpeg_cleanup(int ret)
         ost->audio_channels_mapped = 0;
 
         av_dict_free(&ost->sws_dict);
+        av_dict_free(&ost->swr_opts);
 
         avcodec_free_context(&ost->enc_ctx);
         avcodec_parameters_free(&ost->ref_par);
@@ -1080,6 +1081,7 @@ static void do_video_out(OutputFile *of,
 
     if (!ost->filters_script &&
         !ost->filters &&
+        (nb_filtergraphs == 0 || !filtergraphs[0]->graph_desc) &&
         next_picture &&
         ist &&
         lrintf(next_picture->pkt_duration * av_q2d(ist->st->time_base) / av_q2d(enc->time_base)) > 0) {
@@ -3875,7 +3877,9 @@ static OutputStream *choose_output(void)
                        av_rescale_q(ost->st->cur_dts, ost->st->time_base,
                                     AV_TIME_BASE_Q);
         if (ost->st->cur_dts == AV_NOPTS_VALUE)
-            av_log(NULL, AV_LOG_DEBUG, "cur_dts is invalid (this is harmless if it occurs once at the start per stream)\n");
+            av_log(NULL, AV_LOG_DEBUG,
+                "cur_dts is invalid st:%d (%d) [init:%d i_done:%d finish:%d] (this is harmless if it occurs once at the start per stream)\n",
+                ost->st->index, ost->st->id, ost->initialized, ost->inputs_done, ost->finished);
 
         if (!ost->initialized && !ost->inputs_done)
             return ost;
@@ -4233,7 +4237,8 @@ static int seek_to_start(InputFile *ifile, AVFormatContext *is)
             ifile->time_base = ist->st->time_base;
         /* the total duration of the stream, max_pts - min_pts is
          * the duration of the stream without the last frame */
-        duration += ist->max_pts - ist->min_pts;
+        if (ist->max_pts > ist->min_pts && ist->max_pts - (uint64_t)ist->min_pts < INT64_MAX - duration)
+            duration += ist->max_pts - ist->min_pts;
         ifile->time_base = duration_max(duration, &ifile->duration, ist->st->time_base,
                                         ifile->time_base);
     }
