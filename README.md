@@ -1,4 +1,6 @@
-FFmpeg HLS PTS discontinuity patches for seamless HLS->MPEG-TS or HLS->RTMP re-streaming
+Added auto https proxy support patch. :-)
+
+FFmpeg HLS PTS discontinuity patch for seamless HLS->MPEG-TS or HLS->RTMP re-streaming
 
 contact: jjustman@nbgp.org
 
